@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>综合实践信息填写</title>
+    <script>
+        function validateForm() {
+            var files = document.getElementById('fileInput').files;
+            if (files.length < 4) {
+                alert('请至少上传4个图片文件');
+                return false;
+            }
+            for (var i = 0; i < files.length; i++) {
+                var file = files[i];
+                if (!file.type.match('image.*')) {
+                    alert('请上传图片文件，支持的格式有：jpg, jpeg, png, gif');
+                    return false;
+                }
+            }
+            return true;
+        }
+    </script>
+</head>
+<body>
+    <form action="submit.php" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
+        <label for="title">标题:</label>
+        <input type="text" id="title" name="title" required><br><br>
+        
+        <label for="content">内容:</label>
+        <textarea id="content" name="content"></textarea><br><br>
+        
+        <label for="name">姓名:</label>
+        <input type="text" id="name" name="name" required><br><br>
+        
+        <label for="student_id">学号:</label>
+        <input type="text" id="student_id" name="student_id" required><br><br>
+        
+        <label for="fileInput">图片上传:</label>
+        <input type="file" id="fileInput" name="file[]" multiple required><br><br>
+        
+        <input type="submit" value="提交">
+    </form>
+</body>
+</html>
