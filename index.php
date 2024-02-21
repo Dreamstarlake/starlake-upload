@@ -23,7 +23,17 @@ if (!file_exists($databaseFile)) {
 }
 
 // 处理表单提交
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['title'])) {
+    // 存储表单数据到SQLite数据库
+    $db = new SQLite3($databaseFile);
+    $title = $_POST['title'];
+    $content = $_POST['content'];
+    $name = $_POST['name'];
+    $studentNumber = $_POST['student_number'];
+
+    // 获取当前上传位置数量
+    $currentUploads = isset($_POST['current_uploads']) ? $_POST['current_uploads'] : 4;
+
     // 处理上传的图片
     $uploadedImages = [];
     $imageUploadPath = 'uploads/';
@@ -32,41 +42,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         mkdir($imageUploadPath, 0777, true);
     }
 
-    for ($i = 1; $i <= 9; $i++) {
+    for ($i = 1; $i <= $currentUploads; $i++) {
         $fieldName = 'image' . $i;
 
         if (isset($_FILES[$fieldName]) && $_FILES[$fieldName]['error'] === 0) {
             $uploadFileName = date('Y-m-d') . '-' . $i . '.jpg'; // 修改文件名为“年-月-日-序号”
-            $destination = $imageUploadPath . $uploadFileName;
+            $destination = $imageUploadPath . $_POST['name'] . '/' . $uploadFileName;
 
             // 检查文件格式为常见图片格式
             $allowedFormats = ['image/jpeg', 'image/png', 'image/gif'];
 
             if (in_array($_FILES[$fieldName]['type'], $allowedFormats)) {
+                // 创建用户文件夹（以姓名为文件夹名）
+                if (!file_exists($imageUploadPath . $_POST['name'])) {
+                    mkdir($imageUploadPath . $_POST['name'], 0777, true);
+                }
+
                 move_uploaded_file($_FILES[$fieldName]['tmp_name'], $destination);
                 $uploadedImages[] = $destination;
             }
         }
     }
 
-    // 存储表单数据到SQLite数据库
-    $db = new SQLite3($databaseFile);
-    $title = $_POST['title'];
-    $content = $_POST['content'];
-    $name = $_POST['name'];
-    $studentNumber = $_POST['student_number'];
-
     $db->exec("INSERT INTO practices (title, content, name, student_number, image_path) VALUES ('$title', '$content', '$name', '$studentNumber', '" . implode(',', $uploadedImages) . "')");
 
     $db->close();
-}
 
-// 获取当前上传位置数量
-$currentUploads = isset($_POST['current_uploads']) ? $_POST['current_uploads'] : 4;
-
-// 处理添加更多上传位置按钮点击
-if (isset($_POST['add_more']) && $currentUploads < 9) {
-    $currentUploads++;
+    // 提示提交成功
+    echo '<script>alert("提交成功！");</script>';
 }
 ?>
 
@@ -105,26 +108,40 @@ if (isset($_POST['add_more']) && $currentUploads < 9) {
 
         <div class="image-upload-container">
             <?php
-            for ($i = 1; $i <= $currentUploads; $i++) {
+            for ($i = 1; $i <= 4; $i++) {
                 echo '<label for="image' . $i . '">上传图片' . $i . '：</label>';
                 echo '<input type="file" name="image' . $i . '" accept="image/jpeg, image/png, image/gif" required>';
             }
             ?>
         </div>
 
-        <input type="hidden" name="current_uploads" value="<?= $currentUploads ?>">
+        <input type="hidden" name="current_uploads" value="4">
 
-        <?php if ($currentUploads < 9): ?>
-            <button type="submit" name="add_more">添加更多图片...</button>
-        <?php else: ?>
-            <script>
-                // 提示已达到上限
-                alert("已达到最大上传位置数量（9个）！");
-            </script>
-        <?php endif; ?>
+        <button type="button" onclick="addMoreImages()">添加更多图片...</button>
 
         <br>
         <input type="submit" value="提交">
     </form>
+
+    <script>
+        function addMoreImages() {
+            var currentUploads = document.querySelector('[name="current_uploads"]');
+            currentUploads.value = parseInt(currentUploads.value) + 1;
+
+            var container = document.querySelector('.image-upload-container');
+            var newLabel = document.createElement('label');
+            newLabel.setAttribute('for', 'image' + currentUploads.value);
+            newLabel.innerText = '上传图片' + currentUploads.value + '：';
+
+            var newInput = document.createElement('input');
+            newInput.setAttribute('type', 'file');
+            newInput.setAttribute('name', 'image' + currentUploads.value);
+            newInput.setAttribute('accept', 'image/jpeg, image/png, image/gif');
+            newInput.setAttribute('required', 'required');
+
+            container.appendChild(newLabel);
+            container.appendChild(newInput);
+        }
+    </script>
 </body>
 </html>
