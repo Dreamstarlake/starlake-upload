@@ -23,53 +23,56 @@ if (!file_exists($databaseFile)) {
 }
 
 // 处理表单提交
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['title'])) {
-    // 存储表单数据到SQLite数据库
-    $db = new SQLite3($databaseFile);
-    $title = $_POST['title'];
-    $content = $_POST['content'];
-    $name = $_POST['name'];
-    $studentNumber = $_POST['student_number'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // 检查姓名字段是否填写
+    if (empty($_POST['name'])) {
+        echo '<script>alert("姓名字段未填写！");</script>';
+    } else {
+        // 存储表单数据到SQLite数据库
+        $db = new SQLite3($databaseFile);
+        $title = $_POST['title'];
+        $content = $_POST['content'];
+        $name = $_POST['name'];
+        $studentNumber = $_POST['student_number'];
 
-    // 获取当前上传位置数量
-    $currentUploads = isset($_POST['current_uploads']) ? $_POST['current_uploads'] : 4;
+        // 处理上传的图片
+        $uploadedImages = [];
+        $imageUploadPath = 'uploads/';
 
-    // 处理上传的图片
-    $uploadedImages = [];
-    $imageUploadPath = 'uploads/';
+        if (!file_exists($imageUploadPath)) {
+            mkdir($imageUploadPath, 0777, true);
+        }
 
-    if (!file_exists($imageUploadPath)) {
-        mkdir($imageUploadPath, 0777, true);
-    }
+        for ($i = 1; $i <= 9; $i++) {
+            $fieldName = 'image' . $i;
 
-    for ($i = 1; $i <= $currentUploads; $i++) {
-        $fieldName = 'image' . $i;
+            if (isset($_FILES[$fieldName]) && $_FILES[$fieldName]['error'] === 0) {
+                $uploadFileName = date('Y-m-d') . '-' . $i . '.jpg';
+                $destination = $imageUploadPath . $_POST['name'] . '/' . $uploadFileName;
 
-        if (isset($_FILES[$fieldName]) && $_FILES[$fieldName]['error'] === 0) {
-            $uploadFileName = date('Y-m-d') . '-' . $i . '.jpg'; // 修改文件名为“年-月-日-序号”
-            $destination = $imageUploadPath . $_POST['name'] . '/' . $uploadFileName;
+                $allowedFormats = ['image/jpeg', 'image/png', 'image/gif'];
 
-            // 检查文件格式为常见图片格式
-            $allowedFormats = ['image/jpeg', 'image/png', 'image/gif'];
+                if (in_array($_FILES[$fieldName]['type'], $allowedFormats)) {
+                    if (!file_exists($imageUploadPath . $_POST['name'])) {
+                        mkdir($imageUploadPath . $_POST['name'], 0777, true);
+                    }
 
-            if (in_array($_FILES[$fieldName]['type'], $allowedFormats)) {
-                // 创建用户文件夹（以姓名为文件夹名）
-                if (!file_exists($imageUploadPath . $_POST['name'])) {
-                    mkdir($imageUploadPath . $_POST['name'], 0777, true);
+                    move_uploaded_file($_FILES[$fieldName]['tmp_name'], $destination);
+                    $uploadedImages[] = $destination;
                 }
-
-                move_uploaded_file($_FILES[$fieldName]['tmp_name'], $destination);
-                $uploadedImages[] = $destination;
             }
         }
+
+        $db->exec("INSERT INTO practices (title, content, name, student_number, image_path) VALUES ('$title', '$content', '$name', '$studentNumber', '" . implode(',', $uploadedImages) . "')");
+
+        $db->close();
+
+        // 提示提交成功
+        echo '<script>alert("提交成功！");</script>';
     }
 
-    $db->exec("INSERT INTO practices (title, content, name, student_number, image_path) VALUES ('$title', '$content', '$name', '$studentNumber', '" . implode(',', $uploadedImages) . "')");
-
-    $db->close();
-
-    // 提示提交成功
-    echo '<script>alert("提交成功！");</script>';
+    // 阻止页面刷新
+    die();
 }
 ?>
 
@@ -93,9 +96,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['title'])) {
 </head>
 <body>
     <h2>填写综合实践信息</h2>
-    <form method="post" enctype="multipart/form-data">
+    <form method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
         <label for="title">标题：</label>
-        <input type="text" name="title" required><br>
+        <input type="text" name="title"><br>
 
         <label for="content">内容：</label>
         <textarea name="content"></textarea><br>
@@ -104,13 +107,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['title'])) {
         <input type="text" name="name" required><br>
 
         <label for="student_number">学号：</label>
-        <input type="text" name="student_number" required><br>
+        <input type="text" name="student_number"><br>
 
         <div class="image-upload-container">
             <?php
             for ($i = 1; $i <= 4; $i++) {
                 echo '<label for="image' . $i . '">上传图片' . $i . '：</label>';
-                echo '<input type="file" name="image' . $i . '" accept="image/jpeg, image/png, image/gif" required>';
+                echo '<input type="file" name="image' . $i . '" accept="image/jpeg, image/png, image/gif">';
             }
             ?>
         </div>
@@ -137,10 +140,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['title'])) {
             newInput.setAttribute('type', 'file');
             newInput.setAttribute('name', 'image' + currentUploads.value);
             newInput.setAttribute('accept', 'image/jpeg, image/png, image/gif');
-            newInput.setAttribute('required', 'required');
 
             container.appendChild(newLabel);
             container.appendChild(newInput);
+        }
+
+        function validateForm() {
+            // 自定义验证逻辑
+            var nameField = document.querySelector('[name="name"]');
+            if (nameField.value.trim() === '') {
+                alert('姓名字段未填写！');
+                return false;
+            }
+
+            // 添加其他字段的验证逻辑...
+
+            return true;  // 如果所有验证通过，返回true允许提交
         }
     </script>
 </body>
