@@ -60,6 +60,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $db->close();
 }
+
+// 获取当前上传位置数量
+$currentUploads = isset($_POST['current_uploads']) ? $_POST['current_uploads'] : 4;
+
+// 处理添加更多上传位置按钮点击
+if (isset($_POST['add_more']) && $currentUploads < 9) {
+    $currentUploads++;
+}
 ?>
 
 <!DOCTYPE html>
@@ -67,6 +75,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <title>综合实践信息填写</title>
+    <style>
+        .image-upload-container {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .image-upload-container img {
+            max-width: 100px;
+            max-height: 100px;
+            margin: 5px;
+        }
+    </style>
 </head>
 <body>
     <h2>填写综合实践信息</h2>
@@ -83,18 +103,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <label for="student_number">学号：</label>
         <input type="text" name="student_number" required><br>
 
-        <label for="image1">上传图片1：</label>
-        <input type="file" name="image1" accept="image/jpeg, image/png, image/gif" required><br>
+        <div class="image-upload-container">
+            <?php
+            for ($i = 1; $i <= $currentUploads; $i++) {
+                echo '<label for="image' . $i . '">上传图片' . $i . '：</label>';
+                echo '<input type="file" name="image' . $i . '" accept="image/jpeg, image/png, image/gif" required>';
+            }
+            ?>
+        </div>
 
-        <label for="image2">上传图片2：</label>
-        <input type="file" name="image2" accept="image/jpeg, image/png, image/gif" required><br>
+        <input type="hidden" name="current_uploads" value="<?= $currentUploads ?>">
 
-        <label for="image3">上传图片3：</label>
-        <input type="file" name="image3" accept="image/jpeg, image/png, image/gif" required><br>
+        <?php if ($currentUploads < 9): ?>
+            <button type="submit" name="add_more">添加更多图片...</button>
+        <?php else: ?>
+            <script>
+                // 提示已达到上限
+                alert("已达到最大上传位置数量（9个）！");
+            </script>
+        <?php endif; ?>
 
-        <label for="image4">上传图片4：</label>
-        <input type="file" name="image4" accept="image/jpeg, image/png, image/gif" required><br>
-
+        <br>
         <input type="submit" value="提交">
     </form>
 </body>
