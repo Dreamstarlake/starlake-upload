@@ -1,0 +1,136 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>综合实践照片提交</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        form {
+            margin-top: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="text"],
+        input[type="number"],
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            transition: border-color 0.3s ease;
+        }
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        textarea:focus {
+            border-color: #5cb85c;
+            outline: none;
+        }
+        .photo-upload {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .photo-upload input {
+            flex: 1;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: box-shadow 0.3s ease;
+        }
+        .photo-upload input:hover {
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #4cae4c;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>综合实践照片提交</h1>
+        <form id="submissionForm" method="post" enctype="multipart/form-data">
+            <label for="title">标题:</label>
+            <input type="text" id="title" name="title" required>
+            <label for="content">内容:</label>
+            <textarea id="content" name="content" rows="4" required></textarea>
+            <label for="name">姓名:</label>
+            <input type="text" id="name" name="name" required>
+            <label for="student-id">学号:</label>
+            <input type="number" id="student-id" name="student_number" required>
+            <div class="photo-upload">
+                <input type="file" id="photo1" name="photo1" accept="image/*" required>
+                <input type="file" id="photo2" name="photo2" accept="image/*" required>
+                <input type="file" id="photo3" name="photo3" accept="image/*" required>
+                <input type="file" id="photo4" name="photo4" accept="image/*" required>
+            </div>
+            <button type="submit">提交</button>
+        </form>
+    </div>
+    <script>
+        // 监听表单提交事件
+        document.getElementById('submissionForm').addEventListener('submit', function(event) {
+            // 阻止表单默认提交行为
+            event.preventDefault();
+            // 获取表单数据
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+            const name = document.getElementById('name').value;
+            const studentId = document.getElementById('student-id').value;
+
+            // 检查所有必填字段是否已填写
+            if (title && content && name && studentId) {
+                // 所有字段都已填写，提交表单数据
+                // 使用fetch API发送表单数据
+                fetch('submit.php', {
+                    method: 'POST',
+                    body: new FormData(event.target)
+                }).then(response => {
+                    if (response.ok) {
+                        alert('提交成功！');
+                    } else {
+                        alert('提交失败，请稍后再试。');
+                    }
+                }).catch(error => {
+                    console.error('Error:', error);
+                    alert('发生错误，请稍后再试。');
+                });
+            } else {
+                // 如果有字段为空，显示错误消息
+                alert('所有字段都是必填项，请填写完整后再提交。');
+            }
+        });
+    </script>
+</body>
+</html>
